@@ -45,7 +45,8 @@ import           Graphics.Vty                   ( Key(..) )
 import qualified Data.ByteString.Lazy          as BL
 import qualified Data.Text                     as T
 import qualified GHC.Generics                  as GHC
-
+import qualified Data.List.NonEmpty            as NE
+import           Data.Foldable                  (foldMap)
 
 #if !defined(BRICK)
 data Key = KEsc  | KChar Char | KBS | KEnter
@@ -637,6 +638,17 @@ data VersionRange = SimpleRange (NonEmpty VersionCmp) -- And
 
 instance NFData VersionRange
 
+instance Pretty VersionCmp where
+  pPrint (VR_gt v) = text "> " <> pPrint v
+  pPrint (VR_gteq v) = text ">= " <> pPrint v
+  pPrint (VR_lt v) = text "< " <> pPrint v
+  pPrint (VR_lteq v) = text "<= " <> pPrint v
+  pPrint (VR_eq v) = text "= " <> pPrint v
+
+instance Pretty VersionRange where
+  pPrint (SimpleRange xs) = foldl1 (\x y -> x <> text " && " <> y) $ NE.map pPrint xs
+  pPrint (OrRange xs vr) = foldMap pPrint xs <> " || " <> pPrint vr
+
 instance Pretty Versioning where
   pPrint = text . T.unpack . prettyV
 
@@ -725,3 +737,5 @@ instance Pretty ToolVersion where
 data BuildSystem = Hadrian
                  | Make
   deriving (Show, Eq)
+
+type Lol = Int
